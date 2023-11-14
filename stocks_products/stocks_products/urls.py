@@ -21,5 +21,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('admin/', admin.site.urls),
     path('api/v1/', include('logistic.urls')),
-    # path('ViewProducts', ProductViewSet.as_view())
+    # path('ViewProducts/', ProductViewSet.as_view()),
+    # path('ViewStocks/', StockViewSet.as_view()),
+
 ]
