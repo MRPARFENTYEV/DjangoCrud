@@ -4,7 +4,7 @@ from django.db import models
 from logistic.models import Product, Stock, StockProduct
 
 from rest_framework import serializers
-from .models import Stock, Product, StockProduct
+# from .models import Stock, Product, StockProduct
 
 class ProductSerializer(serializers.ModelSerializer):
 
@@ -14,9 +14,6 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ProductPositionSerializer(serializers.ModelSerializer):
-
-    product = ProductSerializer()
-
     class Meta:
         model = StockProduct
         fields = "__all__"
@@ -24,36 +21,83 @@ class ProductPositionSerializer(serializers.ModelSerializer):
 class StockSerializer(serializers.ModelSerializer):
     positions = ProductPositionSerializer(many=True)
 
-    # # positions = ProductPositionSerializer(many=True)
-    # product = ProductSerializer(many=True)
     class Meta:
         model = Stock
         fields = "__all__"
-
-    # настройте сериализатор для склада
-
     def create(self, validated_data):
-        # достаем связанные данные для других таблиц
         positions = validated_data.pop('positions')
+        for position in positions:
+            stock = super().create(validated_data)
+            product = super().create(validated_data)
+            price = super().create(validated_data)
+            quantity = super().create(validated_data)
+            StockProduct.objects.create(stock=stock,product=product,price=price,quantity=quantity, **position)
+            return stock
+    # def update(self, instance, validated_data):
+    #     positions = validated_data.pop('positions')
+    #     positions.save()
+    #     return instance
+    #     # обновляем склад по его параметрам
+    #     stock = super().update(instance, **validated_data)
+    #     for position in positions:
+    #         print(position)
+    #         field, value = StockProduct.objects.update_or_create(**position)
+    #         StockProduct.object.create(position=field, stock=value)
+    #         return stock
+
+
+            # def create(self, validated_data):
+            #     # достаем связанные данные для других таблиц
+            #     positions = validated_data.pop('positions')
+            #
+            #     # создаем склад по его параметрам
+            #     stock = super().create(validated_data)
+            #
+            #     # здесь вам надо заполнить связанные таблицы
+            #     # в нашем случае: таблицу StockProduct
+            #     # с помощью списка positions
+            #     for position in positions:
+            #         StockProduct.objects.create(stock=stock, **position)
+            #
+            #     return stock
+            # StockProduct.objects.create(stock=position.stock,
+            #                             product =position.product,
+            #                             price=position.price,
+            #                             quantity=position.quantity)
+    #
+    #
+    #         stock = super().create(**positions)
+    #         return stock
+        # return stock
+        #
+
+        # return validated_data
+        # заполняю stockproduct
+
+    #     print(positions)
+
         # создаем склад по его параметрам
-        stock = super().create(**validated_data)# переопределение поведения родительского класса create
-        for position in positions:
-            print(position)
-            field, value = StockProduct.objects.update_or_create(**position)
-            StockProduct.object.create(position = field,stock= value)
-            return stock
+        # stock = super().create(**validated_data)# переопределение поведения родительского класса create
+        # for position in positions:
+        #     print(position)
+        #     field, value = StockProduct.objects.update_or_create(**position)
+        #     StockProduct.object.create(position = field,stock= value)
+        #     return stock
 
-    def update(self, instance, validated_data):
-        # достаем связанные данные для других таблиц
-        positions = validated_data.pop('positions')
-
-        # обновляем склад по его параметрам
-        stock = super().update(instance, **validated_data)
-        for position in positions:
-            print(position)
-            field, value = StockProduct.objects.update_or_create(**position)
-            StockProduct.object.create(position=field, stock=value)
-            return stock
+    # def update(self, instance, validated_data):
+    # #     # достаем связанные данные для других таблиц
+    #     positions = validated_data.pop('positions')
+    #     positions.save()
+    #
+    #     return instance
+    #
+    #     # обновляем склад по его параметрам
+    #     stock = super().update(instance, **validated_data)
+    #     for position in positions:
+    #         print(position)
+    #         field, value = StockProduct.objects.update_or_create(**position)
+    #         StockProduct.object.create(position=field, stock=value)
+    #         return stock
 
 
 
