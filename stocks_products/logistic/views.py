@@ -5,12 +5,26 @@ from django.http import Http404
 from rest_framework.response import Response
 from logistic.models import Product, Stock, StockProduct
 from logistic.serializers import ProductSerializer, ProductPositionSerializer, StockSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import serializers
+# from stocks_products.logistic import serializers
 
 
 class ProductViewSet(ModelViewSet):
 # class ProductViewSet(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    filter_backends = [DjangoFilterBackend] # реализуйте поиск товаров по названию и описанию
+    filterset_fields = ['title','description']
+
+class StockViewSet(ModelViewSet):
+
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['products']
+    #реализуйте фильтрацию складов по товару
+
     # def list(self, request):
     #     try:
     #         products = self.queryset
@@ -53,8 +67,12 @@ class ProductViewSet(ModelViewSet):
     #     return Response(serializer.data)
 
 #
-class StockViewSet(ModelViewSet):
-# class StockViewSet(generics.ListAPIView):
-    queryset = Stock.objects.all()
-    serializer_class = StockSerializer
-    # при необходимости добавьте параметры фильтрации
+
+
+# class StockFilter(serializers.ModelSerializer):
+#     '''Выводит одну запись измерений по id'''
+#     stock = StockViewSet(read_only=True)# работает при внешнем ключе в measurement
+#     class Meta:
+#         model = Stock
+#         # exclude = ()
+#         fields = '__all__'

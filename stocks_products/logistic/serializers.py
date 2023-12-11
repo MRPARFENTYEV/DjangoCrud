@@ -14,25 +14,148 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class ProductPositionSerializer(serializers.ModelSerializer):
+#
     class Meta:
         model = StockProduct
         fields = "__all__"
 
 class StockSerializer(serializers.ModelSerializer):
+    # positions = ProductPositionSerializer(many=True)
     positions = ProductPositionSerializer(many=True)
 
     class Meta:
         model = Stock
-        fields = "__all__"
+
+        fields = '__all__'
+
+    # def create(self, validated_data):
+    #     # достаем связанные данные для других таблиц
+    #     positions = validated_data.pop('positions')
+    #
+    #     # создаем склад по его параметрам
+    #     stock = super().create(validated_data)
+    #
+    #     # здесь вам надо заполнить связанные таблицы
+    #     # в нашем случае: таблицу StockProduct
+    #     # с помощью списка positions
+    #
+    #     return stock
+    '''в методе create() пройдитесь циклом по positions и создайте позиции склада for
+     position in positions: StockProduct.objects.create(stock=..., product=..., price=..., quantity=...) '''
+
     def create(self, validated_data):
+        # достаем связанные данные для других таблиц
         positions = validated_data.pop('positions')
+
+
+        # создаем склад по его параметрам
+        stock = super().create(validated_data)
+        product = super().create(validated_data)
+        price = super().create(validated_data)
+        quantity = super().create(validated_data)
+
+        # здесь вам надо заполнить связанные таблицы
+        # в нашем случае: таблицу StockProduct
+        # с помощью списка positions
         for position in positions:
-            stock = super().create(validated_data)
-            product = super().create(validated_data)
-            price = super().create(validated_data)
-            quantity = super().create(validated_data)
-            StockProduct.objects.create(stock=stock,product=product,price=price,quantity=quantity, **position)
-            return stock
+            # StockProduct.objects.create(stock=stock, **position)
+            StockProduct.objects.create(stock=stock, product=product, price=price, quantity=quantity)
+
+        return stock
+
+    def update(self, instance, validated_data):
+        # достаем связанные данные для других таблиц
+        positions = validated_data.pop('positions')
+        # обновляем склад по его параметрам / обращение к modelSerializer
+        stock = super().update(instance, validated_data)
+        product = super().create(validated_data)
+        price = super().create(validated_data)
+        quantity = super().create(validated_data)
+        # здесь вам надо обновить связанные таблицы
+        # в нашем случае: таблицу StockProduct
+        # с помощью списка positions
+        for position in positions:
+            object, created = StockProduct.objects.update_or_create(
+                stock=stock,
+                product=position['product'],
+                defaults={'stock': stock, 'product': position['product'], 'quantity': position['quantity'],
+                          'price': position['price']}
+            )
+
+        return stock
+        # # достаем связанные данные для других таблиц
+        # positions = validated_data.pop('positions')
+        #
+        # product = super().update(instance, validated_data)
+        # price = super().update(instance, validated_data)
+        # quantity = super().update(instance, validated_data)
+        #
+        # # обновляем склад по его параметрам
+        # stock = super().update(instance, validated_data)
+        # for position in positions:
+        #     obj = StockProduct.objects.update_or_create(stock=stock, product=product,price=price,quantity=quantity
+        #                                           defaults={'price':, 'quantity': ...})
+        #
+        #     defaults = {'first_name': 'Bob'}
+        #     try:
+        #         obj = Person.objects.get(first_name='John', last_name='Lennon')
+        #         for key, value in defaults.items():
+        #             setattr(obj, key, value)
+        #         obj.save()
+        #     except Person.DoesNotExist:
+        #         new_values = {'first_name': 'John', 'last_name': 'Lennon'}
+        #         new_values.update(defaults)
+        #         obj = Person(**new_values)
+        #         obj.save()
+        #
+        # # здесь вам надо обновить связанные таблицы
+        # # в нашем случае: таблицу StockProduct
+        # # с помощью списка positions
+        #
+        # return stock
+    # _____________________________________________________________________________________________
+    # Нашел пример как это сделано другими:
+    # class TrackSerializer(serializers.ModelSerializer):
+    #     class Meta:
+    #         model = Track
+    #         fields = ['order', 'title', 'duration']
+    #
+    # class AlbumSerializer(serializers.ModelSerializer):
+    #     tracks = TrackSerializer(many=True)
+    #
+    #     class Meta:
+    #         model = Album
+    #         fields = ['album_name', 'artist', 'tracks']
+    #
+    #     def create(self, validated_data):
+    #         tracks_data = validated_data.pop('tracks')
+    #         album = Album.objects.create(**validated_data)
+    #         for track_data in tracks_data:
+    #             Track.objects.create(album=album, **track_data)
+    #         return album
+    # _______________________________________________________________________________
+
+    # def create(self, validated_data):
+    #     positions = validated_data.pop('positions')
+    #     stock = super().create(**validated_data)
+    #     product = Stock.create(**validated_data)
+    #     price = Stock.create(**validated_data)
+    #     quantity = Stock.create(**validated_data)
+    #     for position in positions:
+    #         StockProduct.objects.create(stock_id=stock,product=product,price=price,quantity=quantity, **position)
+    #     return stock
+    # def create(self, validated_data):
+    #     positions = validated_data.pop('positions')
+    #     stock = super().create(validated_data)
+    #     # stock = Stock.objects.create(validated_data)
+    #     # product = Stock.objects.create(validated_data)
+    #     # price = Stock.objects.create(validated_data)
+    #     # quantity = Stock.objects.create(validated_data)
+    #     for position in positions:
+    #         StockProduct.objects.create(stock=stock,product=product,price=price,quantity=quantity, **position)
+    #     return stock
+
+
     # def update(self, instance, validated_data):
     #     positions = validated_data.pop('positions')
     #     positions.save()
@@ -40,7 +163,6 @@ class StockSerializer(serializers.ModelSerializer):
     #     # обновляем склад по его параметрам
     #     stock = super().update(instance, **validated_data)
     #     for position in positions:
-    #         print(position)
     #         field, value = StockProduct.objects.update_or_create(**position)
     #         StockProduct.object.create(position=field, stock=value)
     #         return stock
