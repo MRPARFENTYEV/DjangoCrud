@@ -17,7 +17,7 @@ class ProductPositionSerializer(serializers.ModelSerializer):
 #
     class Meta:
         model = StockProduct
-        fields = ['quantity','price']
+        fields = ['quantity','price','product']
 
 class StockSerializer(serializers.ModelSerializer):
     # positions = ProductPositionSerializer(many=True)
@@ -49,8 +49,16 @@ class StockSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # достаем связанные данные для других таблиц
         positions = validated_data.pop('positions')
+        print('__positions___________________')
+        print(positions)
         stock = super().update(instance, validated_data)
+        print('__STOCK___________________')
+        print(stock)
+
+
         for position in positions:
+            print('_position____________')
+            print(position)
             object, created = StockProduct.objects.update_or_create(
                 stock=stock,
                 product=position['product'],
